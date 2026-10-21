@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions — Spendly{% endblock %}
+
+{% block content %}
+<section class="legal-page">
+    <div class="legal-inner">
+        <header class="legal-header">
+            <h1 class="legal-title">Terms and Conditions</h1>
+            <p class="legal-meta">Last updated: October 21, 2026</p>
+        </header>
+
+        <article class="legal-content">
+            <section class="legal-section">
+                <h2>1. Acceptance of Terms</h2>
+                <p>
+                    By accessing or using Spendly ("the Service"), you agree to be bound by these Terms and Conditions ("Terms").
+                    If you do not agree to any part of these Terms, you may not use the Service.
+                </p>
+            </section>
+
+            <section class="legal-section">
+                <h2>2. Use of Service</h2>
+                <p>
+                    Spendly is a personal expense tracking application designed to help you log, categorize, and analyze your spending.
+                    You agree to use the Service only for its intended purpose and in accordance with applicable laws.
+                </p>
+                <ul>
+                    <li>You must provide accurate and complete information when creating an account.</li>
+                    <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+                    <li>You may not use the Service for any illegal or unauthorized purpose.</li>
+                    <li>You may not attempt to reverse engineer, decompile, or extract the source code of the Service.</li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h2>3. User Data</h2>
+                <p>
+                    You retain ownership of all data you submit to Spendly, including expenses, categories, and personal information.
+                    By using the Service, you grant us a limited, non-exclusive license to store, process, and display your data
+                    solely for the purpose of providing the Service to you.
+                </p>
+                <p>
+                    We do not sell your personal data to third parties. Your expense data is used exclusively to generate
+                    your personal reports and summaries within the application.
+                </p>
+            </section>
+
+            <section class="legal-section">
+                <h2>4. Limitations of Liability</h2>
+                <p>
+                    Spendly is provided "as is" and "as available" without warranties of any kind, either express or implied.
+                    We do not warrant that the Service will be uninterrupted, error-free, or free of viruses or other harmful components.
+                </p>
+                <p>
+                    In no event shall Spendly, its owners, or contributors be liable for any indirect, incidental, special,
+                    consequential, or punitive damages, including without limitation, loss of profits, data, or other intangible losses,
+                    resulting from your use of or inability to use the Service.
+                </p>
+            </section>
+
+            <section class="legal-section">
+                <h2>5. Changes to Terms</h2>
+                <p>
+                    We reserve the right to modify these Terms at any time. If a revision is material, we will provide notice
+                    through the Service (e.g., a banner or notification) at least 30 days before the new terms take effect.
+                    Your continued use of the Service after the effective date constitutes acceptance of the revised Terms.
+                </p>
+            </section>
+
+            <section class="legal-section">
+                <h2>6. Governing Law</h2>
+                <p>
+                    These Terms shall be governed by and construed in accordance with the laws of India, without regard
+                    to its conflict of law provisions.
+                </p>
+            </section>
+
+            <section class="legal-section">
+                <h2>7. Contact</h2>
+                <p>
+                    If you have any questions about these Terms, please contact us at <a href="mailto:support@spendly.example">support@spendly.example</a>.
+                </p>
+            </section>
+        </article>
+    </div>
+</section>
+{% endblock %}
+
+{% block head %}
+<style>
+/* Legal page styles matching Spendly theme */
+.legal-page {
+    padding: 4rem 2rem;
+    max-width: var(--max-width);
+    margin: 0 auto;
+}
+
+.legal-inner {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 3rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+}
+
+.legal-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.legal-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+}
+
+.legal-meta {
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+}
+
+.legal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.legal-section h2 {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+}
+
+.legal-section p {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    line-height: 1.75;
+    margin-bottom: 0.75rem;
+}
+
+.legal-section p:last-child {
+    margin-bottom: 0;
+}
+
+.legal-section ul {
+    margin-left: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--ink-soft);
+}
+
+.legal-section li {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    margin-bottom: 0.4rem;
+}
+
+.legal-section li:last-child {
+    margin-bottom: 0;
+}
+
+.legal-section a {
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.legal-section a:hover {
+    color: var(--accent-2);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .legal-page {
+        padding: 2rem 1rem;
+    }
+    .legal-inner {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
