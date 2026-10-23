@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
-from database.db import get_db, init_db, seed_db, create_user
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from database.db import get_db, init_db, seed_db, create_user, get_user_by_email
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-in-production"
@@ -17,6 +17,8 @@ def landing():
 
 @app.route("/register")
 def register():
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
     return render_template("register.html")
 
 
@@ -48,7 +50,27 @@ def register_post():
 
 @app.route("/login")
 def login():
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
     return render_template("login.html")
+
+
+@app.route("/login", methods=["POST"])
+def login_post():
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+
+    if not email or not password:
+        return render_template("login.html", error="All fields are required")
+
+    user = get_user_by_email(email)
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return render_template("login.html", error="Invalid email or password")
+
+    session["user_id"] = user["id"]
+    session["user_name"] = user["name"]
+    session["user_email"] = user["email"]
+    return redirect(url_for("landing"))
 
 
 @app.route("/terms")
@@ -67,7 +89,8 @@ def privacy():
 
 @app.route("/logout")
 def logout():
-    return "Logout — coming in Step 3"
+    session.clear()
+    return redirect(url_for("landing"))
 
 
 @app.route("/profile")
