@@ -1,7 +1,9 @@
-from flask import Flask, render_template
-from database.db import get_db, init_db, seed_db
+from flask import Flask, render_template, request, redirect, url_for, flash
+from werkzeug.security import generate_password_hash
+from database.db import get_db, init_db, seed_db, create_user
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-change-in-production"
 
 
 # ------------------------------------------------------------------ #
@@ -16,6 +18,32 @@ def landing():
 @app.route("/register")
 def register():
     return render_template("register.html")
+
+
+@app.route("/register", methods=["POST"])
+def register_post():
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+
+    # Server-side validation
+    if not name or not email or not password:
+        flash("All fields are required", "error")
+        return render_template("register.html", error="All fields are required")
+
+    if len(password) < 8:
+        flash("Password must be at least 8 characters", "error")
+        return render_template("register.html", error="Password must be at least 8 characters")
+
+    # Attempt to create user
+    user_id = create_user(name, email, password)
+
+    if user_id is None:
+        flash("Email already registered", "error")
+        return render_template("register.html", error="Email already registered")
+
+    flash("Account created successfully! Please sign in.", "success")
+    return redirect(url_for("login"))
 
 
 @app.route("/login")
