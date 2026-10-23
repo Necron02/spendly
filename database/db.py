@@ -79,6 +79,16 @@ def get_user_by_email(email: str) -> dict | None:
     return user
 
 
+def get_user_by_id(user_id: int) -> dict | None:
+    """Get user by ID. Returns dict-like Row or None if not found."""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+
 def seed_db():
     """Inserts demo data if users table is empty."""
     conn = get_db()

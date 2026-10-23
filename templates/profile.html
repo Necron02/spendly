@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="profile-section">
+    <header class="profile-header">
+        <h1 class="profile-title">Profile</h1>
+        <p class="profile-subtitle">Your account overview and spending summary</p>
+    </header>
+
+    <!-- Section 1: User Info Card -->
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <h2 class="profile-card-title">Account Information</h2>
+            <div class="profile-user-avatar">
+                {{ user.name[0].upper() }}
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+            <div class="profile-user-info">
+                <div class="profile-user-name">{{ user.name }}</div>
+                <div class="profile-user-email">{{ user.email }}</div>
+            </div>
+            <div class="profile-user-meta">
+                <span>📅 Member since {{ user.member_since }}</span>
+                <span>✓ Verified</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Summary Stats Row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_expenses }}</div>
+            <div class="stat-label">Total Expenses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">₹{{ "{:,.2f}".format(stats.total_spent) }}</div>
+            <div class="stat-label">Total Spent</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">₹{{ "{:,.2f}".format(stats.avg_per_expense) }}</div>
+            <div class="stat-label">Avg per Expense</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.top_category }}</div>
+            <div class="stat-label">Top Category</div>
+        </div>
+    </div>
+
+    <!-- Section 3: Transaction History Table -->
+    <div class="table-section">
+        <div class="table-section-header">
+            <h3 class="table-section-title">Recent Transactions</h3>
+            <a href="{{ url_for('add_expense') }}" class="btn-primary" style="font-size: 0.8rem; padding: 0.4rem 1rem;">Add Expense</a>
+        </div>
+        {% if transactions %}
+        <table class="transactions-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.date }}</td>
+                    <td>
+                        <span class="category-badge category-badge-{{ txn.category.lower() }}">
+                            {{ txn.category }}
+                        </span>
+                    </td>
+                    <td>{{ txn.description }}</td>
+                    <td class="amount">₹{{ "{:,.2f}".format(txn.amount) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>No transactions yet. <a href="{{ url_for('add_expense') }}" style="color: var(--accent);">Add your first expense</a></p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 4: Category Breakdown -->
+    <div class="category-section">
+        <div class="table-section-header">
+            <h3 class="table-section-title">Spending by Category</h3>
+        </div>
+        <div class="category-list">
+            {% for cat in categories %}
+            <div class="category-item">
+                <div class="category-item-info">
+                    <div class="category-item-header">
+                        <span class="category-item-name">{{ cat.category }}</span>
+                        <span class="category-item-count">{{ cat.count }} transactions</span>
+                    </div>
+                    <div class="category-item-bar">
+                        <div class="category-item-bar-fill category-fill-{{ cat.category.lower() }}" style="width: {{ cat.percentage }}%"></div>
+                    </div>
+                </div>
+                <div class="category-item-amount">₹{{ "{:,.2f}".format(cat.amount) }}</div>
+                <div class="category-item-percentage">{{ cat.percentage }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}
