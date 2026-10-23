@@ -17,7 +17,9 @@
             Spendly helps you log expenses, spot patterns, and stay on budget — without the spreadsheet headache.
         </p>
         <div class="hero-actions">
+            {% if not session.user_id %}
             <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
+            {% endif %}
             <button type="button" id="openVideoModal" class="btn-ghost">See how it works</button>
         </div>
     </div>
@@ -72,6 +74,30 @@
     </div>
 </section>
 
+{% if session.user_id %}
+<section class="features">
+    <div class="features-inner">
+        <div class="feature-card coming-soon-card">
+            <div class="feature-icon">◷</div>
+            <h3 class="feature-title">Dashboard</h3>
+            <p class="feature-body">Your personal expense dashboard is coming soon. Track spending, view reports, and manage budgets all in one place.</p>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="feature-card coming-soon-card">
+            <div class="feature-icon">₹</div>
+            <h3 class="feature-title">Add Expense</h3>
+            <p class="feature-body">Quickly log new expenses with categories, amounts, and notes. Stay on top of every transaction.</p>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+        <div class="feature-card coming-soon-card">
+            <div class="feature-icon">◎</div>
+            <h3 class="feature-title">Reports & Insights</h3>
+            <p class="feature-body">Visualize your spending patterns with charts and category breakdowns. Make smarter financial decisions.</p>
+            <span class="coming-soon-badge">Coming Soon</span>
+        </div>
+    </div>
+</section>
+{% else %}
 <section class="features">
     <div class="features-inner">
         <div class="feature-card">
@@ -91,7 +117,9 @@
         </div>
     </div>
 </section>
+{% endif %}
 
+{% if not session.user_id %}
 <section class="cta-section">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
@@ -99,6 +127,7 @@
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
+{% endif %}
 
 <!-- Video Modal Overlay -->
 <div id="videoModal" class="modal-overlay" aria-hidden="true">
@@ -111,6 +140,24 @@
 </div>
 
 <style>
+.coming-soon-card {
+    position: relative;
+    opacity: 0.8;
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.4rem 1rem;
+    background: var(--accent, #f59e0b);
+    color: var(--text-on-accent, #fff);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm, 6px);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
