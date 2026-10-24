@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
+from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-in-production"
@@ -100,45 +101,32 @@ def profile():
         flash("Please sign in to view your profile", "error")
         return redirect(url_for("login"))
 
-    # Hardcoded demo data for Step 4 (matches seed data in db.py)
-    user = {
-        "name": session.get("user_name", "Demo User"),
-        "email": session.get("user_email", "demo@spendly.com"),
-        "member_since": "January 2025"
-    }
+    user_id = session["user_id"]
 
+    # Get user info from database
+    user = get_user_profile(user_id)
+    if not user:
+        flash("User not found", "error")
+        return redirect(url_for("logout"))
+
+    # Get real data from DB
+    stats_raw = get_summary_stats(user_id)
+    transactions = get_recent_transactions(user_id, limit=10)
+    categories = get_category_breakdown(user_id)
+
+    # Transform stats to match template expectations
     stats = {
-        "total_expenses": 24,
-        "total_spent": 18240.00,
-        "avg_per_expense": 760.00,
-        "top_category": "Food"
+        "total_expenses": stats_raw["transaction_count"],
+        "total_spent": stats_raw["total_spent"],
+        "avg_per_expense": round(stats_raw["total_spent"] / stats_raw["transaction_count"], 2) if stats_raw["transaction_count"] > 0 else 0,
+        "top_category": stats_raw["top_category"] or "—"
     }
-
-    transactions = [
-        {"date": "2025-01-28", "category": "Food", "amount": 450.00, "description": "Weekly groceries"},
-        {"date": "2025-01-25", "category": "Transport", "amount": 120.00, "description": "Fuel refill"},
-        {"date": "2025-01-22", "category": "Bills", "amount": 2500.00, "description": "Electricity bill"},
-        {"date": "2025-01-20", "category": "Health", "amount": 850.00, "description": "Prescription"},
-        {"date": "2025-01-18", "category": "Entertainment", "amount": 600.00, "description": "Movie tickets"},
-        {"date": "2025-01-15", "category": "Shopping", "amount": 1800.00, "description": "New shirt"},
-        {"date": "2025-01-12", "category": "Food", "amount": 320.00, "description": "Coffee and snacks"},
-        {"date": "2025-01-10", "category": "Transport", "amount": 80.00, "description": "Bus to work"},
-    ]
-
-    category_breakdown = [
-        {"category": "Food", "amount": 7800.00, "percentage": 43, "count": 8},
-        {"category": "Bills", "amount": 4500.00, "percentage": 25, "count": 2},
-        {"category": "Shopping", "amount": 3200.00, "percentage": 18, "count": 3},
-        {"category": "Health", "amount": 1200.00, "percentage": 6, "count": 2},
-        {"category": "Transport", "amount": 900.00, "percentage": 5, "count": 3},
-        {"category": "Entertainment", "amount": 640.00, "percentage": 3, "count": 2},
-    ]
 
     return render_template("profile.html",
                           user=user,
                           stats=stats,
                           transactions=transactions,
-                          categories=category_breakdown)
+                          categories=categories)
 
 
 @app.route("/expenses/add")
