@@ -906,3 +906,157 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 1rem;
     opacity: 0.5;
 }
+
+/* ------------------------------------------------------------------ */
+/* Filter Bar (Profile Page)                                          */
+/* ------------------------------------------------------------------ */
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+}
+
+.filter-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-preset-btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.filter-preset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filter-preset-btn.active {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+}
+
+.filter-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.filter-custom input[type="date"] {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--paper);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filter-custom input[type="date"]:focus {
+    border-color: var(--accent);
+}
+
+.filter-separator {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
+
+.filter-clear {
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.filter-clear:hover {
+    color: var(--danger);
+}
+
+.filter-badge {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid rgba(26, 71, 42, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Responsive adjustments for filter bar */
+@media (max-width: 900px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-custom {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .filter-custom input[type="date"] {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 600px) {
+    .filter-presets {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filter-custom {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-custom > * {
+        width: 100%;
+    }
+
+    .filter-separator {
+        text-align: center;
+        margin: 0.5rem 0;
+    }
+}

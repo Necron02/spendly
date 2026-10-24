@@ -6,6 +6,7 @@ connection via get_db() and closes it before returning.
 
 from database.db import get_db
 from datetime import datetime
+from typing import Optional
 
 
 def get_user_by_id(user_id: int) -> dict | None:
@@ -35,7 +36,17 @@ def get_user_by_id(user_id: int) -> dict | None:
     return None
 
 
-def get_summary_stats(user_id: int) -> dict:
+def _build_date_filter(date_from: Optional[str], date_to: Optional[str]) -> tuple[str, list]:
+    """Build WHERE clause fragment and parameters for date range filter.
+
+    Returns (where_fragment, params) where where_fragment is empty string if no filter.
+    """
+    if date_from and date_to:
+        return "AND date BETWEEN ? AND ?", [date_from, date_to]
+    return "", []
+
+
+def get_summary_stats(user_id: int, date_from: Optional[str] = None, date_to: Optional[str] = None) -> dict:
     """Get total spent, transaction count, top category, and average per expense.
 
     Returns dict with: total_spent, transaction_count, avg_per_expense, top_category
@@ -43,21 +54,24 @@ def get_summary_stats(user_id: int) -> dict:
     conn = get_db()
     cursor = conn.cursor()
 
+    date_where, date_params = _build_date_filter(date_from, date_to)
+    base_params = [user_id] + date_params
+
     # Total spent and count
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT COALESCE(SUM(amount), 0) as total_spent, COUNT(*) as transaction_count
-        FROM expenses WHERE user_id = ?
-    """, (user_id,))
+        FROM expenses WHERE user_id = ? {date_where}
+    """, base_params)
     row = cursor.fetchone()
     total_spent = row["total_spent"] or 0
     transaction_count = row["transaction_count"] or 0
 
     # Top category (highest total amount)
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT category, SUM(amount) as cat_total
-        FROM expenses WHERE user_id = ?
+        FROM expenses WHERE user_id = ? {date_where}
         GROUP BY category ORDER BY cat_total DESC LIMIT 1
-    """, (user_id,))
+    """, base_params)
     top_row = cursor.fetchone()
     top_category = top_row["category"] if top_row else "—"
 
@@ -72,25 +86,29 @@ def get_summary_stats(user_id: int) -> dict:
     }
 
 
-def get_recent_transactions(user_id: int, limit: int = 10, offset: int = 0) -> list:
-    """Get recent transactions newest-first with pagination.
+def get_recent_transactions(user_id: int, limit: int = 10, date_from: Optional[str] = None, date_to: Optional[str] = None) -> list:
+    """Get recent transactions newest-first with optional date filter.
 
     Returns list of dicts with: date, category, description, amount
     """
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    date_where, date_params = _build_date_filter(date_from, date_to)
+    base_params = [user_id] + date_params + [limit]
+
+    cursor.execute(f"""
         SELECT date, category, description, amount
-        FROM expenses WHERE user_id = ?
+        FROM expenses WHERE user_id = ? {date_where}
         ORDER BY date DESC, id DESC
-        LIMIT ? OFFSET ?
-    """, (user_id, limit, offset))
+        LIMIT ?
+    """, base_params)
     transactions = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return transactions
 
 
-def get_category_breakdown(user_id: int) -> list:
+def get_category_breakdown(user_id: int, date_from: Optional[str] = None, date_to: Optional[str] = None) -> list:
     """Get category breakdown with percentages summing to 100.
 
     Returns list of dicts with: category, amount, percentage, count
@@ -98,11 +116,15 @@ def get_category_breakdown(user_id: int) -> list:
     """
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    date_where, date_params = _build_date_filter(date_from, date_to)
+    base_params = [user_id] + date_params
+
+    cursor.execute(f"""
         SELECT category, SUM(amount) as amount, COUNT(*) as count
-        FROM expenses WHERE user_id = ?
+        FROM expenses WHERE user_id = ? {date_where}
         GROUP BY category ORDER BY amount DESC
-    """, (user_id,))
+    """, base_params)
     rows = cursor.fetchall()
     conn.close()
 

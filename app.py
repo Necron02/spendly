@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
 from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-in-production"
@@ -109,24 +110,96 @@ def profile():
         flash("User not found", "error")
         return redirect(url_for("logout"))
 
-    # Get real data from DB
-    stats_raw = get_summary_stats(user_id)
-    transactions = get_recent_transactions(user_id, limit=10)
-    categories = get_category_breakdown(user_id)
+    # Read and validate date filter params
+    date_from_str = request.args.get("date_from", "").strip()
+    date_to_str = request.args.get("date_to", "").strip()
+
+    date_from = None
+    date_to = None
+    active_preset = None
+
+    # Validate date_from
+    if date_from_str:
+        try:
+            datetime.strptime(date_from_str, "%Y-%m-%d")
+            date_from = date_from_str
+        except ValueError:
+            pass  # Invalid format - ignore
+
+    # Validate date_to
+    if date_to_str:
+        try:
+            datetime.strptime(date_to_str, "%Y-%m-%d")
+            date_to = date_to_str
+        except ValueError:
+            pass  # Invalid format - ignore
+
+    # Check if date_from > date_to
+    if date_from and date_to and date_from > date_to:
+        flash("Start date must be before end date.", "error")
+        date_from = None
+        date_to = None
+
+    # Compute preset date ranges
+    today = datetime.now().date()
+    presets = {
+        "this_month": {
+            "label": "This Month",
+            "date_from": today.replace(day=1).isoformat(),
+            "date_to": today.isoformat()
+        },
+        "last_3_months": {
+            "label": "Last 3 Months",
+            "date_from": (today - timedelta(days=90)).isoformat(),
+            "date_to": today.isoformat()
+        },
+        "last_6_months": {
+            "label": "Last 6 Months",
+            "date_from": (today - timedelta(days=180)).isoformat(),
+            "date_to": today.isoformat()
+        }
+    }
+
+    # Determine active preset
+    if date_from and date_to:
+        for key, preset in presets.items():
+            if preset["date_from"] == date_from and preset["date_to"] == date_to:
+                active_preset = key
+                break
+
+    # Get real data from DB with date filter
+    stats_raw = get_summary_stats(user_id, date_from, date_to)
+    transactions = get_recent_transactions(user_id, limit=10, date_from=date_from, date_to=date_to)
+    categories = get_category_breakdown(user_id, date_from, date_to)
 
     # Transform stats to match template expectations
     stats = {
         "total_expenses": stats_raw["transaction_count"],
         "total_spent": stats_raw["total_spent"],
-        "avg_per_expense": round(stats_raw["total_spent"] / stats_raw["transaction_count"], 2) if stats_raw["transaction_count"] > 0 else 0,
+        "avg_per_expense": round(stats_raw["avg_per_expense"], 2) if stats_raw["transaction_count"] > 0 else 0,
         "top_category": stats_raw["top_category"] or "—"
     }
+
+    # Format filter display
+    filter_display = None
+    if date_from and date_to:
+        try:
+            from_dt = datetime.strptime(date_from, "%Y-%m-%d")
+            to_dt = datetime.strptime(date_to, "%Y-%m-%d")
+            filter_display = f"Showing: {from_dt.strftime('%b %d, %Y')} – {to_dt.strftime('%b %d, %Y')}"
+        except Exception:
+            filter_display = "Filtered"
 
     return render_template("profile.html",
                           user=user,
                           stats=stats,
                           transactions=transactions,
-                          categories=categories)
+                          categories=categories,
+                          date_from=date_from,
+                          date_to=date_to,
+                          active_preset=active_preset,
+                          filter_display=filter_display,
+                          presets=presets)
 
 
 @app.route("/expenses/add")
