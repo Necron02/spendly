@@ -95,6 +95,16 @@ def logout():
     return redirect(url_for("landing"))
 
 
+@app.route("/analytics")
+def analytics():
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to view analytics", "error")
+        return redirect(url_for("login"))
+
+    return render_template("analytics.html")
+
+
 @app.route("/profile")
 def profile():
     # Auth guard
