@@ -149,3 +149,24 @@ def get_category_breakdown(user_id: int, date_from: Optional[str] = None, date_t
         breakdown[0]["percentage"] += diff
 
     return breakdown
+
+
+def add_expense(user_id: int, amount: float, category: str, date: str, description: str | None = None) -> int | None:
+    """Insert a new expense record.
+
+    Returns the new expense id on success, None on failure.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+            (user_id, amount, category, date, description)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error:
+        return None
+    finally:
+        conn.close()
