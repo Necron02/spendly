@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
-from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown
-from datetime import datetime, timedelta
+from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown, add_expense as add_expense_db
+from datetime import datetime, timedelta, date
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-in-production"
@@ -212,9 +212,97 @@ def profile():
                           presets=presets)
 
 
+ALLOWED_CATEGORIES = {"Food", "Transport", "Bills", "Health", "Entertainment", "Shopping"}
+
+
+def _validate_expense_form(form) -> dict:
+    """Validate expense form data. Returns dict of errors (empty if valid)."""
+    errors = {}
+
+    # Amount validation
+    amount_str = form.get("amount", "").strip()
+    if not amount_str:
+        errors["amount"] = "Amount is required"
+    else:
+        try:
+            amount = float(amount_str)
+            if amount <= 0:
+                errors["amount"] = "Amount must be greater than 0"
+        except ValueError:
+            errors["amount"] = "Invalid amount"
+
+    # Category validation
+    category = form.get("category", "").strip()
+    if not category:
+        errors["category"] = "Category is required"
+    elif category not in ALLOWED_CATEGORIES:
+        errors["category"] = "Invalid category"
+
+    # Date validation
+    date_str = form.get("date", "").strip()
+    if not date_str:
+        errors["date"] = "Date is required"
+    else:
+        try:
+            from datetime import date as date_cls
+            expense_date = date_cls.fromisoformat(date_str)
+            today = date_cls.today()
+            if expense_date > today:
+                errors["date"] = "Date cannot be in the future"
+        except ValueError:
+            errors["date"] = "Invalid date format"
+
+    # Description validation
+    description = form.get("description", "").strip()
+    if description and len(description) > 500:
+        errors["description"] = "Description must be 500 characters or less"
+
+    return errors
+
+
 @app.route("/expenses/add")
 def add_expense():
-    return "Add expense — coming in Step 7"
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to add an expense", "error")
+        return redirect(url_for("login"))
+
+    today = date.today().isoformat()
+    return render_template("add_expense.html", today=today)
+
+
+@app.route("/expenses/add", methods=["POST"])
+def add_expense_post():
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to add an expense", "error")
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    today = date.today().isoformat()
+
+    # Validate form
+    errors = _validate_expense_form(request.form)
+    if errors:
+        for field, msg in errors.items():
+            flash(msg, "error")
+        return render_template("add_expense.html", today=today, errors=errors), 400
+
+    # Extract validated data
+    amount = float(request.form["amount"].strip())
+    category = request.form["category"].strip()
+    expense_date = request.form["date"].strip()
+    description = request.form["description"].strip() or None
+
+    # Insert into database
+    expense_id = add_expense_db(user_id, amount, category, expense_date, description)
+
+    if expense_id is None:
+        flash("Failed to add expense. Please try again.", "error")
+        return render_template("add_expense.html", today=today), 500
+
+    flash("Expense added successfully", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")

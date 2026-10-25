@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="add-expense-section">
+    <header class="add-expense-header">
+        <h1 class="add-expense-title">Add Expense</h1>
+        <p class="add-expense-subtitle">Record a new transaction</p>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form class="add-expense-form" method="POST" action="{{ url_for('add_expense') }}">
+        <div class="form-group">
+            <label for="amount" class="form-label">Amount <span class="required">*</span></label>
+            <div class="input-with-prefix">
+                <span class="input-prefix">₹</span>
+                <input type="number" id="amount" name="amount" class="form-input"
+                       step="0.01" min="0.01" required
+                       value="{{ request.form.amount if request.form.amount else '' }}"
+                       placeholder="0.00">
+            </div>
+            {% if errors and errors.amount %}
+            <span class="form-error">{{ errors.amount }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="category" class="form-label">Category <span class="required">*</span></label>
+            <select id="category" name="category" class="form-input form-select" required>
+                <option value="" {% if not request.form.category %}selected{% endif %} disabled>Select a category</option>
+                <option value="Food" {% if request.form.category == 'Food' %}selected{% endif %}>Food</option>
+                <option value="Transport" {% if request.form.category == 'Transport' %}selected{% endif %}>Transport</option>
+                <option value="Bills" {% if request.form.category == 'Bills' %}selected{% endif %}>Bills</option>
+                <option value="Health" {% if request.form.category == 'Health' %}selected{% endif %}>Health</option>
+                <option value="Entertainment" {% if request.form.category == 'Entertainment' %}selected{% endif %}>Entertainment</option>
+                <option value="Shopping" {% if request.form.category == 'Shopping' %}selected{% endif %}>Shopping</option>
+            </select>
+            {% if errors and errors.category %}
+            <span class="form-error">{{ errors.category }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="date" class="form-label">Date <span class="required">*</span></label>
+            <input type="date" id="date" name="date" class="form-input"
+                   max="{{ today }}"
+                   value="{{ request.form.date if request.form.date else today }}"
+                   required>
+            {% if errors and errors.date %}
+            <span class="form-error">{{ errors.date }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="description" class="form-label">Description (optional)</label>
+            <textarea id="description" name="description" class="form-input form-textarea"
+                      maxlength="500" rows="3"
+                      placeholder="Optional: Add a note...">{{ request.form.description if request.form.description else '' }}</textarea>
+            <div class="form-hint">Max 500 characters</div>
+            {% if errors and errors.description %}
+            <span class="form-error">{{ errors.description }}</span>
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Add Expense</button>
+            <a href="{{ url_for('profile') }}" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</section>
+
+{% endblock %}
