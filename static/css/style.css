@@ -957,6 +957,27 @@ a { color: inherit; text-decoration: none; }
     color: var(--accent);
 }
 
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--danger);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background: var(--danger-light);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
 .transactions-table .category-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;

@@ -213,3 +213,24 @@ def update_expense(user_id: int, expense_id: int, amount: float, category: str, 
         return False
     finally:
         conn.close()
+
+
+def delete_expense(user_id: int, expense_id: int) -> bool:
+    """Delete an expense record.
+
+    Returns True on success, False if expense doesn't belong to user or not found.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
