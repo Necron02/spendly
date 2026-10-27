@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
-from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown, add_expense as add_expense_db, get_expense_by_id, update_expense
+from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown, add_expense as add_expense_db, get_expense_by_id, update_expense, delete_expense as delete_expense_db
 from datetime import datetime, timedelta, date
 
 app = Flask(__name__)
@@ -361,9 +361,29 @@ def edit_expense_post(id):
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to delete an expense", "error")
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    # Fetch expense (with ownership check)
+    expense = get_expense_by_id(user_id, id)
+    if not expense:
+        abort(404)
+
+    # Delete the expense
+    success = delete_expense_db(user_id, id)
+
+    if not success:
+        flash("Failed to delete expense. Please try again.", "error")
+        return redirect(url_for("profile"))
+
+    flash("Expense deleted successfully", "success")
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
