@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
-from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown, add_expense as add_expense_db
+from database.queries import get_user_by_id as get_user_profile, get_summary_stats, get_recent_transactions, get_category_breakdown, add_expense as add_expense_db, get_expense_by_id, update_expense
 from datetime import datetime, timedelta, date
 
 app = Flask(__name__)
@@ -307,7 +307,58 @@ def add_expense_post():
 
 @app.route("/expenses/<int:id>/edit")
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to edit an expense", "error")
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    # Fetch expense (with ownership check)
+    expense = get_expense_by_id(user_id, id)
+    if not expense:
+        abort(404)
+
+    today = date.today().isoformat()
+    return render_template("edit_expense.html", expense=expense, today=today)
+
+
+@app.route("/expenses/<int:id>/edit", methods=["POST"])
+def edit_expense_post(id):
+    # Auth guard
+    if not session.get("user_id"):
+        flash("Please sign in to edit an expense", "error")
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    # Fetch expense (with ownership check)
+    expense = get_expense_by_id(user_id, id)
+    if not expense:
+        abort(404)
+
+    # Validate form
+    errors = _validate_expense_form(request.form)
+    if errors:
+        for field, msg in errors.items():
+            flash(msg, "error")
+        return render_template("edit_expense.html", expense=expense, today=date.today().isoformat(), errors=errors), 400
+
+    # Extract validated data
+    amount = float(request.form["amount"].strip())
+    category = request.form["category"].strip()
+    expense_date = request.form["date"].strip()
+    description = request.form["description"].strip() or None
+
+    # Update in database
+    success = update_expense(user_id, id, amount, category, expense_date, description)
+
+    if not success:
+        flash("Failed to update expense. Please try again.", "error")
+        return render_template("edit_expense.html", expense=expense, today=date.today().isoformat()), 500
+
+    flash("Expense updated successfully", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")
