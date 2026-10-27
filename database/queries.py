@@ -7,6 +7,7 @@ connection via get_db() and closes it before returning.
 from database.db import get_db
 from datetime import datetime
 from typing import Optional
+import sqlite3
 
 
 def get_user_by_id(user_id: int) -> dict | None:
@@ -89,7 +90,7 @@ def get_summary_stats(user_id: int, date_from: Optional[str] = None, date_to: Op
 def get_recent_transactions(user_id: int, limit: int = 10, date_from: Optional[str] = None, date_to: Optional[str] = None) -> list:
     """Get recent transactions newest-first with optional date filter.
 
-    Returns list of dicts with: date, category, description, amount
+    Returns list of dicts with: id, date, category, description, amount
     """
     conn = get_db()
     cursor = conn.cursor()
@@ -98,7 +99,7 @@ def get_recent_transactions(user_id: int, limit: int = 10, date_from: Optional[s
     base_params = [user_id] + date_params + [limit]
 
     cursor.execute(f"""
-        SELECT date, category, description, amount
+        SELECT id, date, category, description, amount
         FROM expenses WHERE user_id = ? {date_where}
         ORDER BY date DESC, id DESC
         LIMIT ?
@@ -168,5 +169,47 @@ def add_expense(user_id: int, amount: float, category: str, date: str, descripti
         return cursor.lastrowid
     except sqlite3.Error:
         return None
+    finally:
+        conn.close()
+
+
+def get_expense_by_id(user_id: int, expense_id: int) -> dict | None:
+    """Get expense by ID for a specific user.
+
+    Returns dict with: id, user_id, amount, category, date, description, created_at
+    Returns None if not found or doesn't belong to user.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM expenses WHERE id = ? AND user_id = ?",
+        (expense_id, user_id)
+    )
+    expense = cursor.fetchone()
+    conn.close()
+
+    if expense:
+        return dict(expense)
+    return None
+
+
+def update_expense(user_id: int, expense_id: int, amount: float, category: str, date: str, description: str | None = None) -> bool:
+    """Update an expense record.
+
+    Returns True on success, False on failure or if expense doesn't belong to user.
+    """
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? WHERE id = ? AND user_id = ?",
+            (amount, category, date, description, expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error:
+        return False
     finally:
         conn.close()
